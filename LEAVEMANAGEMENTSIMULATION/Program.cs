@@ -1,15 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using LeaveManagementAppService;
 
 namespace LeaveSystem
 {
     internal class Program
     {
-        static int[] leaveBalance = { 10, 15, 5, 90, 10, 3 };
-        static string[] leaveNames = { "Sick Leave", "Vacation Leave", "Personal Leave", "Maternity Leave", "Paternity Leave", "Emergency Leave" };
-
-        static string[] applications = new string[100];
-        static int appCount = 0;
-
+        static LeaveAppService service = new LeaveAppService();
         static void Main(string[] args)
         {
             while (true)
@@ -45,76 +43,63 @@ namespace LeaveSystem
         static void FileLeave()
         {
             Console.WriteLine("\n---------- File Leave ----------");
-            Console.Write("Enter Employee Name: ");
+            Console.Write("Employee Name: ");
             string name = Console.ReadLine();
 
-            Console.WriteLine("\nSelect Leave Type:");
-            for (int i = 0; i < leaveNames.Length; i++)
-                Console.WriteLine($"{i + 1}. {leaveNames[i]}");
+            var types = service.GetLeaveTypes();
 
-            Console.Write("\nYour choice: ");
-            int leaveType = Convert.ToInt32(Console.ReadLine()) - 1;
+            for (int i = 0; i < types.Length; i++)
+                Console.WriteLine($"{i + 1}. {types[i]}");
+
+            Console.Write("Leave Type: ");
+            int type = Convert.ToInt32(Console.ReadLine()) - 1;
 
             Console.Write("Start Date (MM/DD/YYYY): ");
-            DateTime startDate = Convert.ToDateTime(Console.ReadLine());
+            DateTime start = Convert.ToDateTime(Console.ReadLine());
 
             Console.Write("End Date (MM/DD/YYYY): ");
-            DateTime endDate = Convert.ToDateTime(Console.ReadLine());
-
-            int totalDays = (endDate - startDate).Days + 1;
+            DateTime end = Convert.ToDateTime(Console.ReadLine());
 
             Console.Write("Reason: ");
             string reason = Console.ReadLine();
-            string status = "Rejected";
 
-            if (leaveType >= 0 && leaveType < leaveBalance.Length)
-            {
-                if (totalDays <= leaveBalance[leaveType])
-                {
-                    leaveBalance[leaveType] -= totalDays;
-                    status = "Approved";
-                }
-            }
+            var result = service.FileLeave(name, type, start, end, reason);
 
             Console.WriteLine("\n---------- Leave Application ----------");
-            Console.WriteLine($"Employee Name: {name}");
-            Console.WriteLine($"Leave Type: {leaveNames[leaveType]}");
-            Console.WriteLine($"From: {startDate.ToShortDateString()}");
-            Console.WriteLine($"To: {endDate.ToShortDateString()}");
-            Console.WriteLine($"Total Days: {totalDays}");
-            Console.WriteLine($"Reason: {reason}");
-            Console.WriteLine($"Status: {status}");
+            Console.WriteLine($"Name: {result.EmployeeName}");
+            Console.WriteLine($"Type: {result.LeaveType}");
+            Console.WriteLine($"Days: {result.TotalDays}");
+            Console.WriteLine($"Status: {result.Status}");
             Console.WriteLine("----------------------------------------");
-
-
-            applications[appCount++] =
-                $"| Name: {name} |\n" +
-                $"| Type: {leaveNames[leaveType]} |\n" +
-                $"| From: {startDate.ToShortDateString()} |\n" +
-                $"| To: {endDate.ToShortDateString()} |\n" +
-                $"| Days: {totalDays} |\n" +
-                $"| Reason: {reason} |\n" +
-                $"| Status: {status} |";
         }
 
         static void ViewLeaveBalance()
         {
             Console.WriteLine("\n========== Leave Balance ==========");
-            for (int i = 0; i < leaveBalance.Length; i++)
-                Console.WriteLine($"{leaveNames[i]}: {leaveBalance[i]}");
+            var types = service.GetLeaveTypes();
+            var balances = service.GetLeaveBalances();
+
+            for (int i = 0; i < types.Length; i++)
+                Console.WriteLine($"{types[i]}: {balances[i]}");
             Console.WriteLine("==================================");
         }
 
         static void ViewLeaveApplications()
         {
             Console.WriteLine("\n======= Leave Applications =======");
-
-            if (appCount == 0)
-                Console.WriteLine("No Leave Applications Found.");
-            else
-                for (int i = 0; i < appCount; i++)
-                    Console.WriteLine($"{i + 1}. {applications[i]}");
+            var apps = service.GetApplications();
             Console.WriteLine("==================================");
+
+            if (apps.Count == 0)
+            {
+                Console.WriteLine("No applications found.");
+                return;
+            }
+
+            foreach (var a in apps)
+            {
+                Console.WriteLine($"{a.EmployeeName} | {a.LeaveType} | {a.Status}");
+            }
         }
     }
 }
