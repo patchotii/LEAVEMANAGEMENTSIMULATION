@@ -21,27 +21,40 @@ namespace LeaveManagementAppService
                 return repo.GetLeaveBalances();
             }
 
-            public LeaveModels FileLeave(string name, int leaveType,
-                DateTime startDate, DateTime endDate, string reason)
+            public int[] GetEmployeeBalances(string empID)
+            {
+                return repo.GetEmployeeBalance(empID);
+            }
+
+        public LeaveModels FileLeave(string empID, string name, int leaveType,
+                 DateTime startDate, DateTime endDate, string reason)
+          
             {
                 int totalDays = (endDate - startDate).Days + 1;
 
-                var balances = repo.GetLeaveBalances();
+                var balances = repo.GetEmployeeBalance(empID);
                 var types = repo.GetLeaveNames();
 
                 string status = "Rejected";
 
-                if (leaveType >= 0 && leaveType < balances.Length)
-                {
-                    if (totalDays <= balances[leaveType])
-                    {
-                        repo.DeductLeave(leaveType, totalDays);
-                        status = "Approved";
-                    }
-                }
+               if (leaveType >= 0 && leaveType < balances.Length)
+               {
+                   if (totalDays <= balances[leaveType])
+                   {
+                     repo.DeductLeave(empID, leaveType, totalDays);
+                      status = "Approved";
+                  }
+                 else
+                  {
+                      status = "Rejected - Insufficient Leave Balance";
+                 }
+               }
 
-                LeaveModels app = new LeaveModels
+
+
+            LeaveModels app = new LeaveModels
                 {
+                    EmployeeID = empID,
                     EmployeeName = name,
                     LeaveType = types[leaveType],
                     StartDate = startDate,

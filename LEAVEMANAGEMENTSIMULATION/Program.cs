@@ -8,6 +8,7 @@ namespace LeaveSystem
     internal class Program
     {
         static LeaveAppService service = new LeaveAppService();
+
         static void Main(string[] args)
         {
             while (true)
@@ -21,7 +22,12 @@ namespace LeaveSystem
                 Console.WriteLine("4. Exit");
                 Console.Write("Enter your choice: ");
 
-                int choice = Convert.ToInt32(Console.ReadLine());
+                if (!int.TryParse(Console.ReadLine(), out int choice))
+                {
+                    Console.WriteLine("Invalid input. Please enter a number.");
+                    continue;
+                }
+
                 Console.WriteLine("====================================");
 
                 if (choice == 1)
@@ -43,29 +49,51 @@ namespace LeaveSystem
         static void FileLeave()
         {
             Console.WriteLine("\n---------- File Leave ----------");
+            Console.Write("Employee ID: ");
+            string empID = Console.ReadLine();
+
             Console.Write("Employee Name: ");
             string name = Console.ReadLine();
 
             var types = service.GetLeaveTypes();
-
             for (int i = 0; i < types.Length; i++)
                 Console.WriteLine($"{i + 1}. {types[i]}");
 
             Console.Write("Leave Type: ");
-            int type = Convert.ToInt32(Console.ReadLine()) - 1;
+            if (!int.TryParse(Console.ReadLine(), out int type) || type < 1 || type > types.Length)
+            {
+                Console.WriteLine("Invalid leave type.");
+                return;
+            }
+            type -= 1; 
 
             Console.Write("Start Date (MM/DD/YYYY): ");
-            DateTime start = Convert.ToDateTime(Console.ReadLine());
+            if (!DateTime.TryParse(Console.ReadLine(), out DateTime start))
+            {
+                Console.WriteLine("Invalid start date format.");
+                return;
+            }
 
             Console.Write("End Date (MM/DD/YYYY): ");
-            DateTime end = Convert.ToDateTime(Console.ReadLine());
+            if (!DateTime.TryParse(Console.ReadLine(), out DateTime end))
+            {
+                Console.WriteLine("Invalid end date format.");
+                return;
+            }
+
+            if (end < start)
+            {
+                Console.WriteLine("Error: End date cannot be earlier than start date.");
+                return;
+            }
 
             Console.Write("Reason: ");
             string reason = Console.ReadLine();
 
-            var result = service.FileLeave(name, type, start, end, reason);
+            var result = service.FileLeave(empID, name, type, start, end, reason);
 
             Console.WriteLine("\n---------- Leave Application ----------");
+            Console.WriteLine($"Employee ID: {result.EmployeeID}");
             Console.WriteLine($"Name: {result.EmployeeName}");
             Console.WriteLine($"Type: {result.LeaveType}");
             Console.WriteLine($"Days: {result.TotalDays}");
@@ -76,11 +104,18 @@ namespace LeaveSystem
         static void ViewLeaveBalance()
         {
             Console.WriteLine("\n========== Leave Balance ==========");
+            Console.Write("Enter Employee ID: ");
+            string empID = Console.ReadLine();
+
             var types = service.GetLeaveTypes();
-            var balances = service.GetLeaveBalances();
+            var balances = service.GetEmployeeBalances(empID); 
 
             for (int i = 0; i < types.Length; i++)
+            {
                 Console.WriteLine($"{types[i]}: {balances[i]}");
+                if (balances[i] <= 2)
+                    Console.WriteLine("Warning: Low leave balance!");
+            }
             Console.WriteLine("==================================");
         }
 
@@ -98,7 +133,7 @@ namespace LeaveSystem
 
             foreach (var a in apps)
             {
-                Console.WriteLine($"{a.EmployeeName} | {a.LeaveType} | {a.Status}");
+                Console.WriteLine($"{a.EmployeeID} | {a.EmployeeName} | {a.LeaveType} | {a.Status}");
             }
         }
     }
