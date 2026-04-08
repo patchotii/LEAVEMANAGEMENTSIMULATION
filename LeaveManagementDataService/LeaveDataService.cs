@@ -1,48 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using LeaveManagementModels;
 
 namespace LeaveManagementDataService
 {
     public class LeaveDataService
     {
-        private LeaveData data = new LeaveData();
+        ILeaveDataService _dataService;
 
-        public int[] GetEmployeeBalance(string empID)
-        {
-            if (!data.EmployeeBalances.ContainsKey(empID))
-            {
-                int[] newBalance = (int[])data.LeaveBalance.Clone();
-                data.EmployeeBalances.Add(empID, newBalance);
-            }
+        public int[] GetEmployeeBalance(string empID) => _dataService.GetEmployeeBalance(empID);
+        public int[] GetLeaveBalances() => _dataService.GetLeaveBalances();
+        public string[] GetLeaveNames() => _dataService.GetLeaveNames();
 
-            return data.EmployeeBalances[empID];
-        }
-        public int[] GetLeaveBalances()
-        {
-            return data.LeaveBalance;
-        }
-
-        public string[] GetLeaveNames()
-        {
-            return data.LeaveNames;
-        }
-
-        public void AddApplication(LeaveModels application)
-        {
-            data.Applications.Add(application);
-        }
-
-        public System.Collections.Generic.List<LeaveModels> GetApplications()
-        {
-            return data.Applications;
-        }
-
-        public void DeductLeave(string empID, int leaveType, int days)
-        {
-            var balances = GetEmployeeBalance(empID);
-            balances[leaveType] -= days;
-        }
+        public void AddApplication(LeaveManagementModels.LeaveModels application) => _dataService.AddApplication(application);
+        public List<LeaveManagementModels.LeaveModels> GetApplications() => _dataService.GetApplications();
+        public void DeductLeave(string empID, int leaveType, int days) => _dataService.DeductLeave(empID, leaveType, days);
+        public void UpdateApplication(LeaveManagementModels.LeaveModels app) => _dataService.UpdateApplication(app);
+        public void CancelApplication(LeaveManagementModels.LeaveModels app) => _dataService.CancelApplication(app);
     }
 }

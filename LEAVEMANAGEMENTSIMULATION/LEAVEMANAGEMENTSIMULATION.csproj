@@ -13,4 +13,8 @@
     <ProjectReference Include="..\LeaveManagementModels\LeaveManagementModels.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="LeaveManagementSimulation.bak\" />
+  </ItemGroup>
+
 </Project>
