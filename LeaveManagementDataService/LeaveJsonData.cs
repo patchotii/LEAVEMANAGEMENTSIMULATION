@@ -14,29 +14,23 @@ namespace LeaveManagementDataService
 
         public LeaveJsonData()
         {
-            _jsonFileName = $"{AppDomain.CurrentDomain.BaseDirectory}/LeaveData.json";
-            PopulateJsonFile();
-        }
-
-        private void PopulateJsonFile()
-        {
+            _jsonFileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LeaveData.json");
             RetrieveDataFromJsonFile();
-
-            if (applications.Count <= 0)
-            {
-                SaveDataToJsonFile();
-            }
         }
 
         private void SaveDataToJsonFile()
         {
-            using (var outputStream = File.OpenWrite(_jsonFileName))
+            try
             {
-                JsonSerializer.Serialize<List<LeaveModels>>(
-                    new Utf8JsonWriter(outputStream, new JsonWriterOptions
-                    { SkipValidation = true, Indented = true }),
-                    applications
-                );
+                string jsonString = JsonSerializer.Serialize(applications, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                File.WriteAllText(_jsonFileName, jsonString);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving to JSON: {ex.Message}");
             }
         }
 
@@ -44,24 +38,42 @@ namespace LeaveManagementDataService
         {
             if (!File.Exists(_jsonFileName)) return;
 
-            using (var jsonFileReader = File.OpenText(_jsonFileName))
+            try
             {
-                string content = jsonFileReader.ReadToEnd();
+                string content = File.ReadAllText(_jsonFileName);
                 if (!string.IsNullOrWhiteSpace(content))
                 {
-                    applications = JsonSerializer.Deserialize<List<LeaveModels>>(
-                        content,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                    ).ToList();
+                    applications = JsonSerializer.Deserialize<List<LeaveModels>>(content,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<LeaveModels>();
                 }
             }
+            catch { applications = new List<LeaveModels>(); }
         }
-
 
         public void AddApplication(LeaveModels app)
         {
             applications.Add(app);
             SaveDataToJsonFile();
+        }
+
+        public void UpdateApplication(LeaveModels app)
+        {
+            var index = applications.FindIndex(x => x.EmployeeID == app.EmployeeID && x.StartDate == app.StartDate);
+            if (index != -1)
+            {
+                applications[index] = app;
+                SaveDataToJsonFile();
+            }
+        }
+
+        public void CancelApplication(LeaveModels app)
+        {
+            var itemToRemove = applications.FirstOrDefault(x => x.EmployeeID == app.EmployeeID && x.StartDate == app.StartDate);
+            if (itemToRemove != null)
+            {
+                applications.Remove(itemToRemove);
+                SaveDataToJsonFile();
+            }
         }
 
         public List<LeaveModels> GetApplications()

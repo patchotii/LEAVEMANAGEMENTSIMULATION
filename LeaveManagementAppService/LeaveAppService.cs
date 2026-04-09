@@ -10,6 +10,7 @@ namespace LeaveManagementAppService
     {
         private LeaveInMemoryData balancesRepo = new LeaveInMemoryData();
         private LeaveDBData dbData = new LeaveDBData();
+        private LeaveJsonData jsonRepo = new LeaveJsonData(); 
 
         private string connectionString =
             "Data Source=localhost\\SQLEXPRESS;Initial Catalog=LeaveDB;Integrated Security=True;TrustServerCertificate=True;";
@@ -61,7 +62,9 @@ namespace LeaveManagementAppService
             };
 
             balancesRepo.AddApplication(app);
+
             SaveLeaveToDatabase(app);
+            jsonRepo.AddApplication(app);
 
             return app;
         }
@@ -72,13 +75,16 @@ namespace LeaveManagementAppService
         {
             balancesRepo.UpdateApplication(app);
             UpdateLeaveInDatabase(app);
+            jsonRepo.UpdateApplication(app); 
         }
 
         public void CancelApplication(LeaveModels app)
         {
             balancesRepo.CancelApplication(app);
             DeleteLeaveFromDatabase(app);
+            jsonRepo.CancelApplication(app); 
         }
+
 
         private void SaveLeaveToDatabase(LeaveModels app)
         {

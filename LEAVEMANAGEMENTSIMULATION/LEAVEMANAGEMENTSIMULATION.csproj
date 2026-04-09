@@ -17,4 +17,8 @@
     <Folder Include="LeaveManagementSimulation.bak\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="11.0.0-preview.2.26159.112" />
+  </ItemGroup>
+
 </Project>
