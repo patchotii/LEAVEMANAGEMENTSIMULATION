@@ -68,7 +68,7 @@ namespace LeaveSystem
 
                 if (service.GetApplications().Exists(e => e.EmployeeID == empID))
                 {
-                    Console.WriteLine("Employee ID already exists.");
+                    Console.WriteLine("Employee ID already exists in our records");
                     continue;
                 }
 
@@ -322,7 +322,7 @@ namespace LeaveSystem
                 if (confirm.Equals("Y", StringComparison.OrdinalIgnoreCase))
                 {
                     service.UpdateApplication(app);
-                    Console.WriteLine("Application updated.");
+                    Console.WriteLine("Application updated successfully.");
                     break;
                 }
                 else if (confirm.Equals("N", StringComparison.OrdinalIgnoreCase))
@@ -394,7 +394,7 @@ namespace LeaveSystem
                 if (confirm.Equals("Y", StringComparison.OrdinalIgnoreCase))
                 {
                     service.CancelApplication(app);
-                    Console.WriteLine("Application cancelled.");
+                    Console.WriteLine("Application cancelled successfully.");
                     break;
                 }
                 else if (confirm.Equals("N", StringComparison.OrdinalIgnoreCase))

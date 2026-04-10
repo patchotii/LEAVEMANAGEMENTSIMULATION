@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using LeaveManagementModels;
-using Microsoft.Data.SqlClient;
 using LeaveManagementDataService;
 
 namespace LeaveManagementAppService
@@ -9,15 +8,12 @@ namespace LeaveManagementAppService
     public class LeaveAppService
     {
         private LeaveInMemoryData balancesRepo = new LeaveInMemoryData();
-        private LeaveDBData dbData = new LeaveDBData();
-        private LeaveJsonData jsonRepo = new LeaveJsonData(); 
-
-        private string connectionString =
-            "Data Source=localhost\\SQLEXPRESS;Initial Catalog=LeaveDB;Integrated Security=True;TrustServerCertificate=True;";
+        private LeaveDBData dbRepo = new LeaveDBData();
+        private LeaveJsonData jsonRepo = new LeaveJsonData();
 
         public LeaveAppService()
         {
-            var apps = dbData.GetAllApplications();
+            var apps = dbRepo.GetApplications();
             foreach (var app in apps)
             {
                 balancesRepo.AddApplication(app);
@@ -25,7 +21,6 @@ namespace LeaveManagementAppService
         }
 
         public string[] GetLeaveTypes() => balancesRepo.GetLeaveNames();
-        public int[] GetLeaveBalances() => balancesRepo.GetLeaveBalances();
         public int[] GetEmployeeBalances(string empID) => balancesRepo.GetEmployeeBalance(empID);
 
         public LeaveModels FileLeave(string empID, string name, int leaveType,
@@ -45,7 +40,7 @@ namespace LeaveManagementAppService
                 }
                 else
                 {
-                    status = "Rejected - Insufficient Leave Balance";
+                    status = "Rejected - Insufficient Balance";
                 }
             }
 
@@ -62,9 +57,11 @@ namespace LeaveManagementAppService
             };
 
             balancesRepo.AddApplication(app);
-
-            SaveLeaveToDatabase(app);
-            jsonRepo.AddApplication(app);
+            if (status == "Approved")
+            {
+                dbRepo.AddApplication(app);
+                jsonRepo.AddApplication(app);
+            }
 
             return app;
         }
@@ -74,70 +71,15 @@ namespace LeaveManagementAppService
         public void UpdateApplication(LeaveModels app)
         {
             balancesRepo.UpdateApplication(app);
-            UpdateLeaveInDatabase(app);
-            jsonRepo.UpdateApplication(app); 
+            dbRepo.UpdateApplication(app);
+            jsonRepo.UpdateApplication(app);
         }
 
         public void CancelApplication(LeaveModels app)
         {
             balancesRepo.CancelApplication(app);
-            DeleteLeaveFromDatabase(app);
-            jsonRepo.CancelApplication(app); 
-        }
-
-
-        private void SaveLeaveToDatabase(LeaveModels app)
-        {
-            using SqlConnection conn = new SqlConnection(connectionString);
-            conn.Open();
-            string insertStatement = @"
-                INSERT INTO tbl_LeaveManagement
-                (EmployeeID, EmployeeName, LeaveType, StartDate, EndDate, TotalDays, Reason, Status)
-                VALUES
-                (@EmployeeID, @EmployeeName, @LeaveType, @StartDate, @EndDate, @TotalDays, @Reason, @Status)";
-
-            using SqlCommand cmd = new SqlCommand(insertStatement, conn);
-            cmd.Parameters.AddWithValue("@EmployeeID", app.EmployeeID);
-            cmd.Parameters.AddWithValue("@EmployeeName", app.EmployeeName);
-            cmd.Parameters.AddWithValue("@LeaveType", app.LeaveType);
-            cmd.Parameters.AddWithValue("@StartDate", app.StartDate);
-            cmd.Parameters.AddWithValue("@EndDate", app.EndDate);
-            cmd.Parameters.AddWithValue("@TotalDays", app.TotalDays);
-            cmd.Parameters.AddWithValue("@Reason", app.Reason);
-            cmd.Parameters.AddWithValue("@Status", app.Status);
-            cmd.ExecuteNonQuery();
-        }
-
-        private void UpdateLeaveInDatabase(LeaveModels app)
-        {
-            using SqlConnection conn = new SqlConnection(connectionString);
-            conn.Open();
-            string updateQuery = @"
-                UPDATE tbl_LeaveManagement
-                SET EndDate=@EndDate, Reason=@Reason, TotalDays=@TotalDays
-                WHERE EmployeeID=@EmployeeID AND StartDate=@StartDate";
-
-            using SqlCommand cmd = new SqlCommand(updateQuery, conn);
-            cmd.Parameters.AddWithValue("@EmployeeID", app.EmployeeID);
-            cmd.Parameters.AddWithValue("@StartDate", app.StartDate);
-            cmd.Parameters.AddWithValue("@EndDate", app.EndDate);
-            cmd.Parameters.AddWithValue("@Reason", app.Reason);
-            cmd.Parameters.AddWithValue("@TotalDays", app.TotalDays);
-            cmd.ExecuteNonQuery();
-        }
-
-        private void DeleteLeaveFromDatabase(LeaveModels app)
-        {
-            using SqlConnection conn = new SqlConnection(connectionString);
-            conn.Open();
-            string deleteQuery = @"
-                DELETE FROM tbl_LeaveManagement
-                WHERE EmployeeID=@EmployeeID AND StartDate=@StartDate";
-
-            using SqlCommand cmd = new SqlCommand(deleteQuery, conn);
-            cmd.Parameters.AddWithValue("@EmployeeID", app.EmployeeID);
-            cmd.Parameters.AddWithValue("@StartDate", app.StartDate);
-            cmd.ExecuteNonQuery();
+            dbRepo.CancelApplication(app);
+            jsonRepo.CancelApplication(app);
         }
     }
 }
